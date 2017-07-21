@@ -552,7 +552,7 @@ if (NOT CMAKE_VERSION VERSION_LESS 3.0)
   # CMake even if it has not been installed to a standard directory.
   export (PACKAGE Eigen3)
 
-  install (EXPORT Eigen3Targets NAMESPACE Eigen3:: DESTINATION ${CMAKEPACKAGE_INSTALL_DIR})
+  install (EXPORT Eigen3Targets NAMESPACE Eigen3:: DESTINATION cmake)
 
 else (NOT CMAKE_VERSION VERSION_LESS 3.0)
   # Fallback to legacy Eigen3Config.cmake without the imported target
@@ -566,7 +566,7 @@ else (NOT CMAKE_VERSION VERSION_LESS 3.0)
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Eigen3ConfigLegacy.cmake.in
       ${CMAKE_CURRENT_BINARY_DIR}/Eigen3Config.cmake
       PATH_VARS EIGEN_INCLUDE_DIR EIGEN_ROOT_DIR
-      INSTALL_DESTINATION ${CMAKEPACKAGE_INSTALL_DIR}
+      INSTALL_DESTINATION cmake
       NO_CHECK_REQUIRED_COMPONENTS_MACRO # Eigen does not provide components
     )
   else() 
@@ -589,7 +589,7 @@ endif (NOT CMAKE_VERSION VERSION_LESS 3.0)
 install ( FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/UseEigen3.cmake
                 ${CMAKE_CURRENT_BINARY_DIR}/Eigen3Config.cmake
                 ${CMAKE_CURRENT_BINARY_DIR}/Eigen3ConfigVersion.cmake
-          DESTINATION ${CMAKEPACKAGE_INSTALL_DIR} )
+          DESTINATION cmake )
 
 # Add uninstall target
 add_custom_target ( uninstall
