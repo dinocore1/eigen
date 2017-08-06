@@ -137,7 +137,7 @@ if(NOT MSVC)
   ei_add_cxx_compiler_flag("-Wall")
   ei_add_cxx_compiler_flag("-Wextra")
   #ei_add_cxx_compiler_flag("-Weverything")              # clang
-  
+
   ei_add_cxx_compiler_flag("-Wundef")
   ei_add_cxx_compiler_flag("-Wcast-align")
   ei_add_cxx_compiler_flag("-Wchar-subscripts")
@@ -152,29 +152,29 @@ if(NOT MSVC)
   ei_add_cxx_compiler_flag("-Wc++11-extensions")
   ei_add_cxx_compiler_flag("-Wdouble-promotion")
 #  ei_add_cxx_compiler_flag("-Wconversion")
-  
+
   # -Wshadow is insanely too strict with gcc, hopefully it will become usable with gcc 6
   # if(NOT CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0.0"))
   if(NOT CMAKE_COMPILER_IS_GNUCXX)
     ei_add_cxx_compiler_flag("-Wshadow")
   endif()
-  
+
   ei_add_cxx_compiler_flag("-Wno-psabi")
   ei_add_cxx_compiler_flag("-Wno-variadic-macros")
   ei_add_cxx_compiler_flag("-Wno-long-long")
-  
+
   ei_add_cxx_compiler_flag("-fno-check-new")
   ei_add_cxx_compiler_flag("-fno-common")
   ei_add_cxx_compiler_flag("-fstrict-aliasing")
   ei_add_cxx_compiler_flag("-wd981")                    # disable ICC's "operands are evaluated in unspecified order" remark
   ei_add_cxx_compiler_flag("-wd2304")                   # disable ICC's "warning #2304: non-explicit constructor with single argument may cause implicit type conversion" produced by -Wnon-virtual-dtor
-  
-  
+
+
   # The -ansi flag must be added last, otherwise it is also used as a linker flag by check_cxx_compiler_flag making it fails
   # Moreover we should not set both -strict-ansi and -ansi
   check_cxx_compiler_flag("-strict-ansi" COMPILER_SUPPORT_STRICTANSI)
   ei_add_cxx_compiler_flag("-Qunused-arguments")        # disable clang warning: argument unused during compilation: '-ansi'
-  
+
   if(COMPILER_SUPPORT_STRICTANSI)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -strict-ansi")
   else()
@@ -185,7 +185,7 @@ if(NOT MSVC)
     ei_add_cxx_compiler_flag("-pie")
     ei_add_cxx_compiler_flag("-fPIE")
   endif()
-  
+
   set(CMAKE_REQUIRED_FLAGS "")
 
   option(EIGEN_TEST_SSE2 "Enable/Disable SSE2 in tests/examples" OFF)
@@ -509,88 +509,24 @@ set ( EIGEN_DEFINITIONS "")
 set ( EIGEN_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/${INCLUDE_INSTALL_DIR}" )
 set ( EIGEN_ROOT_DIR ${CMAKE_INSTALL_PREFIX} )
 
-# Interface libraries require at least CMake 3.0
-if (NOT CMAKE_VERSION VERSION_LESS 3.0)
-  include (CMakePackageConfigHelpers)
 
-  # Imported target support
-  add_library (eigen INTERFACE)
+add_library (eigen INTERFACE)
 
-  target_compile_definitions (eigen INTERFACE ${EIGEN_DEFINITIONS})
-  target_include_directories (eigen INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
-  )
+target_compile_definitions (eigen INTERFACE ${EIGEN_DEFINITIONS})
 
-  # Export as title case Eigen
-  set_target_properties (eigen PROPERTIES EXPORT_NAME Eigen)
+target_include_directories (eigen INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:include>
+)
 
-  install (TARGETS eigen EXPORT Eigen3Targets)
+install (TARGETS eigen
+  EXPORT eigen
+)
 
-  configure_package_config_file (
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Eigen3Config.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/Eigen3Config.cmake
-    PATH_VARS EIGEN_INCLUDE_DIR EIGEN_ROOT_DIR
-    INSTALL_DESTINATION ${CMAKEPACKAGE_INSTALL_DIR}
-    NO_CHECK_REQUIRED_COMPONENTS_MACRO # Eigen does not provide components
-  )
-  # Remove CMAKE_SIZEOF_VOID_P from Eigen3ConfigVersion.cmake since Eigen does
-  # not depend on architecture specific settings or libraries. More
-  # specifically, an Eigen3Config.cmake generated from a 64 bit target can be
-  # used for 32 bit targets as well (and vice versa).
-  set (_Eigen3_CMAKE_SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P})
-  unset (CMAKE_SIZEOF_VOID_P)
-  write_basic_package_version_file (Eigen3ConfigVersion.cmake
-                                    VERSION ${EIGEN_VERSION_NUMBER}
-                                    COMPATIBILITY SameMajorVersion)
-  set (CMAKE_SIZEOF_VOID_P ${_Eigen3_CMAKE_SIZEOF_VOID_P})
+install(DIRECTORY Eigen
+  DESTINATION include
+)
 
-  # The Eigen target will be located in the Eigen3 namespace. Other CMake
-  # targets can refer to it using Eigen3::Eigen.
-  export (TARGETS eigen NAMESPACE Eigen3:: FILE Eigen3Targets.cmake)
-  # Export Eigen3 package to CMake registry such that it can be easily found by
-  # CMake even if it has not been installed to a standard directory.
-  export (PACKAGE Eigen3)
-
-  install (EXPORT Eigen3Targets NAMESPACE Eigen3:: DESTINATION cmake)
-
-else (NOT CMAKE_VERSION VERSION_LESS 3.0)
-  # Fallback to legacy Eigen3Config.cmake without the imported target
-  
-  # If CMakePackageConfigHelpers module is available (CMake >= 2.8.8)
-  # create a relocatable Config file, otherwise leave the hardcoded paths       
-  include(CMakePackageConfigHelpers OPTIONAL RESULT_VARIABLE CPCH_PATH)
-  
-  if(CPCH_PATH)
-    configure_package_config_file (
-      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Eigen3ConfigLegacy.cmake.in
-      ${CMAKE_CURRENT_BINARY_DIR}/Eigen3Config.cmake
-      PATH_VARS EIGEN_INCLUDE_DIR EIGEN_ROOT_DIR
-      INSTALL_DESTINATION cmake
-      NO_CHECK_REQUIRED_COMPONENTS_MACRO # Eigen does not provide components
-    )
-  else() 
-    # The PACKAGE_* variables are defined by the configure_package_config_file
-    # but without it we define them manually to the hardcoded paths
-    set(PACKAGE_INIT "")
-    set(PACKAGE_EIGEN_INCLUDE_DIR ${EIGEN_INCLUDE_DIR})
-    set(PACKAGE_EIGEN_ROOT_DIR ${EIGEN_ROOT_DIR})
-    configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Eigen3ConfigLegacy.cmake.in
-                     ${CMAKE_CURRENT_BINARY_DIR}/Eigen3Config.cmake
-                     @ONLY ESCAPE_QUOTES )
-  endif()
-
-  write_basic_package_version_file( Eigen3ConfigVersion.cmake
-                                    VERSION ${EIGEN_VERSION_NUMBER}
-                                    COMPATIBILITY SameMajorVersion )
-
-endif (NOT CMAKE_VERSION VERSION_LESS 3.0)
-
-install ( FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/UseEigen3.cmake
-                ${CMAKE_CURRENT_BINARY_DIR}/Eigen3Config.cmake
-                ${CMAKE_CURRENT_BINARY_DIR}/Eigen3ConfigVersion.cmake
-          DESTINATION cmake )
-
-# Add uninstall target
-add_custom_target ( uninstall
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/EigenUninstall.cmake)
+install(EXPORT eigenConfig
+  DESTINATION cmake
+)
