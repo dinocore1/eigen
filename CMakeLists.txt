@@ -520,7 +520,7 @@ target_include_directories (eigen INTERFACE
 )
 
 install (TARGETS eigen
-  EXPORT eigen
+  EXPORT eigenConfig
 )
 
 install(DIRECTORY Eigen
